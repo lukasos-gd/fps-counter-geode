@@ -16,6 +16,11 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y cmake ninja-build unzip wget
 
+    - name: Setup Android NDK
+      uses: android-actions/setup-ndk@v3
+      with:
+        ndk-version: 25.2.9519653  # recomandat pentru Geode / arm64
+
     - name: Download Geode SDK
       run: |
         wget -O geode-sdk.zip https://github.com/Geode-sdk/Geode/archive/refs/heads/main.zip
@@ -26,8 +31,8 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE=$GEODE_SDK/cmake/android.toolchain.cmake -DGEODE_TARGET_PLATFORM=Android ..
-        cmake --build . --config Release
+        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake -DGEODE_TARGET_PLATFORM=Android ..
+        cmake --build . --config Release -- -j$(nproc)
 
     - name: Package .geode
       run: |
