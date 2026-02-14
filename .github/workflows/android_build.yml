@@ -13,26 +13,35 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y cmake ninja-build unzip wget
+    - name: Install build tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build unzip wget
 
-    - name: Setup Android NDK
-      uses: android-actions/setup-ndk@v3
-      with:
-        ndk-version: 25.2.9519653  # recomandat pentru Geode / arm64
+    - name: Download Android NDK
+      run: |
+        wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip android-ndk-r25c-linux.zip
+        echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r25c" >> $GITHUB_ENV
 
     - name: Download Geode SDK
       run: |
         wget -O geode-sdk.zip https://github.com/Geode-sdk/Geode/archive/refs/heads/main.zip
         unzip geode-sdk.zip
-        export GEODE_SDK=$(pwd)/Geode-main
+        echo "GEODE_SDK=$PWD/Geode-main" >> $GITHUB_ENV
 
     - name: Build Android .so
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake -DGEODE_TARGET_PLATFORM=Android ..
-        cmake --build . --config Release -- -j$(nproc)
+        cmake \
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=arm64-v8a \
+          -DGEODE_TARGET_PLATFORM=Android \
+          -DANDROID_PLATFORM=android-24 \
+          -G Ninja \
+          ..
+        cmake --build . --config Release
 
     - name: Package .geode
       run: |
