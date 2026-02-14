@@ -1,0 +1,44 @@
+name: Build Android Geode Mod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake ninja-build unzip wget
+
+    - name: Download Geode SDK
+      run: |
+        wget -O geode-sdk.zip https://github.com/Geode-sdk/Geode/archive/refs/heads/main.zip
+        unzip geode-sdk.zip
+        export GEODE_SDK=$(pwd)/Geode-main
+
+    - name: Build Android .so
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_TOOLCHAIN_FILE=$GEODE_SDK/cmake/android.toolchain.cmake -DGEODE_TARGET_PLATFORM=Android ..
+        cmake --build . --config Release
+
+    - name: Package .geode
+      run: |
+        mkdir fps-counter.geode
+        cp build/lukas.fps_counter.android64.so fps-counter.geode/
+        cp mod.json fps-counter.geode/
+        cp -r resources fps-counter.geode/
+        zip -r fps-counter.geode.zip fps-counter.geode
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: fps-counter.geode
+        path: fps-counter.geode.zip
