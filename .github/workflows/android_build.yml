@@ -38,7 +38,7 @@ jobs:
         zip -r fps-counter.geode.zip fps-counter.geode
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: fps-counter.geode
         path: fps-counter.geode.zip
